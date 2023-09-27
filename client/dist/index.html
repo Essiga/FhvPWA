@@ -6,6 +6,24 @@
     <title>Title</title>
 </head>
 <body>
-    <h1 class="underline text-2xl">Hello World</h1>
+    <div>
+        <ul id="usersList"></ul>
+    </div>
 </body>
 </html>
+
+<script>
+    async function getUserData(){
+        const response = await fetch("http://127.0.0.1:5000/users");
+        const users = await response.json();
+        console.log(users);
+        let usersList = document.getElementById("usersList");
+        for(i = 0; i < users.length; i++){
+            let li = document.createElement('li');
+            li.innerText = users[i].fullname;
+            usersList.appendChild(li);
+        }
+    }
+
+    getUserData()
+</script>
