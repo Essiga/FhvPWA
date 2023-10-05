@@ -1649,6 +1649,10 @@ html{
   height: 1.5rem;
 }
 
+.min-h-screen{
+  min-height: 100vh;
+}
+
 .w-64{
   width: 16rem;
 }
@@ -1691,6 +1695,10 @@ html{
 
 .flex-1{
   flex: 1 1 0%;
+}
+
+.flex-grow{
+  flex-grow: 1;
 }
 
 .-translate-x-full{
@@ -1739,6 +1747,10 @@ html{
 
 .self-center{
   align-self: center;
+}
+
+.overflow-hidden{
+  overflow: hidden;
 }
 
 .overflow-y-auto{
