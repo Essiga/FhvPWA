@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //
 // }
 let loggedInUser = "daniel";
-loadConversationsForUser("daniel");
+loadConversationsForUser(loggedInUser);
 // let user = {}
 // user.username = "daniel"
 // user.fullname = "Daniel Craig"
@@ -78,13 +78,37 @@ async function addConversationToSideBar(conversation){
                 listItem.appendChild(avatar);
                 listItem.appendChild(fullName);
 
-                listItem.addEventListener("click", () => {
+                listItem.addEventListener("click", async () => {
                     console.log(user.username);
 
                     //push url
-                    history.push('/?' + new URLSearchParams({ conversation: user.username }))
+                    history.push('/?' + new URLSearchParams({ conversation: user.username }));
 
                     //fetch chat
+                    let messages = document.getElementById("messages");
+                    messages.innerHTML = '';
+
+
+                    let conversationResponse = await fetch("/conversations/"+conversation.id+"/messages")
+
+                    let conversationMessages = await conversationResponse.json();
+
+                    conversationMessages.forEach((conversationMessage) =>{
+                        let messageContainer = document.createElement("div");
+                        let message = document.createElement("div");
+                        if(conversationMessage.from === loggedInUser){
+                            messageContainer.classList.add("chat", "chat-end");
+
+                        } else {
+                            messageContainer.classList.add("chat", "chat-start");
+                        }
+                        message.classList.add("chat-bubble");
+                        message.innerText = conversationMessage.message;
+                        messageContainer.appendChild(message);
+                        messages.appendChild(messageContainer);
+                    })
+
+
                 })
 
                 conversationList.appendChild(listItem);
