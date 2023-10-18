@@ -1,25 +1,129 @@
-import { createHashHistory } from "https://unpkg.com/history/history.production.min.js";
+import { createHashHistory } from "./history.js";
 let history = createHashHistory();
 document.addEventListener('DOMContentLoaded', () => {
 
     history.listen(({action, location}) => {
-        if(location.pathname === "/"){
-            console.log("test");
-        }
+
+
 
     })
 
     if ('serviceWorker' in navigator) { //damit es auch auf alten browsern noch funktioniert
-        navigator.serviceWorker.register("/sw.js");
+        navigator.serviceWorker.register("/sw.js", {scope: "/"});
     }
 
     //let userSelection = document.getElementById("userSelection");
     //userSelection.addEventListener("change", userChanged);
-    history.push("/"); //bei conversation wechsel pushen
+    let sendButton = document.getElementById("sendButton");
+    let menuButton = document.getElementById("menuButton");
+    menuButton.addEventListener("click", toggleMenu);
+    sendButton.addEventListener("click", sendMessage);
+    //history.push("/"); //bei conversation wechsel pushen
 
 })
 
 
+
+function toggleMenu(){
+    let sidebar = document.getElementById("sidebar");
+    let menuButton = document.getElementById("menuButton");
+
+    sidebar.classList.toggle("ml-[-16rem]");
+    sidebar.classList.toggle("z-10");
+    menuButton.classList.toggle("z-50");
+
+}
+
+function checkUrlAndOpenChat(){
+    if (history.location.pathname === "/chat") {
+        let username = new URLSearchParams(history.location.search).get("user")
+        if (username) {
+            displayMessagesForUsername(username);
+        }
+    } else if(history.location.pathname === "/"){
+        openLastConversation();
+    }
+}
+
+window.onload = async function () {
+    checkUrlAndOpenChat();
+}
+
+function openLastConversation(){
+    let lastConversation = localStorage.getItem("lastConversation");
+    if(lastConversation !== null){
+        history.push("/chat?user="+lastConversation);
+        displayMessagesForUsername(lastConversation);
+    }
+}
+
+let loggedInUser = "daniel";
+let currentConversation;
+loadConversationsForUser(loggedInUser);
+
+async function getConversationIdForUser(chatPartner){
+    const response = await fetch("/conversations");
+    const conversations = await response.json();
+    console.log(conversations);
+
+    for (let i = 0; i < conversations.length; i++) {
+        if((loggedInUser === conversations[i].participants[0] && chatPartner === conversations[i].participants[1]) ||
+            (chatPartner === conversations[i].participants[0] && loggedInUser === conversations[i].participants[1])){
+            return conversations[i].id;
+        }
+    }
+
+}
+
+async function displayMessagesForUsername(username) {
+    let conversationId = await getConversationIdForUser(username);
+
+    currentConversationId = conversationId;
+    currentConversation = username;
+
+    //fetch chat
+    let messages = document.getElementById("messages");
+    messages.innerHTML = '';
+
+
+    let conversationResponse = await fetch("/conversations/" + currentConversationId + "/messages")
+
+    let conversationMessages = await conversationResponse.json();
+
+    localStorage.setItem("lastConversation", username);
+
+    conversationMessages.forEach((conversationMessage) => {
+        let messageContainer = document.createElement("div");
+        let message = document.createElement("div");
+        if (conversationMessage.from === loggedInUser) {
+            messageContainer.classList.add("chat", "chat-end");
+
+        } else {
+            messageContainer.classList.add("chat", "chat-start");
+        }
+        message.classList.add("chat-bubble");
+        message.innerText = conversationMessage.message;
+        messageContainer.appendChild(message);
+        messages.appendChild(messageContainer);
+    })
+}
+
+let currentConversationId;
+
+async function sendMessage(){
+    let messageInput = document.getElementById("messageInput");
+    let result = await fetch("/conversations/"+currentConversationId+"/messages", {
+        method: "POST",
+        body: JSON.stringify({
+            "from": loggedInUser,
+            "message": messageInput.value,
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    messageInput.value = "";
+}
 
 
 // export function userChanged(){
@@ -34,11 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //     }
 //
 // }
-let loggedInUser = "daniel";
-loadConversationsForUser(loggedInUser);
-// let user = {}
-// user.username = "daniel"
-// user.fullname = "Daniel Craig"
+
 
 async function loadConversationsForUser(username){
     const response = await fetch("/conversations");
@@ -80,9 +180,11 @@ async function addConversationToSideBar(conversation){
 
                 listItem.addEventListener("click", async () => {
                     console.log(user.username);
-
+                    currentConversationId = conversation.id;
+                    currentConversation = user.username;
                     //push url
-                    history.push('/?' + new URLSearchParams({ conversation: user.username }));
+                    history.push('/chat?' + new URLSearchParams({ user: user.username }));
+                    localStorage.setItem("lastConversation", user.username);
 
                     //fetch chat
                     let messages = document.getElementById("messages");
