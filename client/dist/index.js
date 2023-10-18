@@ -16,12 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
     //userSelection.addEventListener("change", userChanged);
     let sendButton = document.getElementById("sendButton");
     let menuButton = document.getElementById("menuButton");
+
     menuButton.addEventListener("click", toggleMenu);
     sendButton.addEventListener("click", sendMessage);
     //history.push("/"); //bei conversation wechsel pushen
 
 })
-
+let messageInput = document.getElementById("messageInput");
+messageInput.onkeydown = (event) =>{
+    if(event.key !== "Enter"){
+        return;
+    }
+    sendMessage();
+}
 
 
 function toggleMenu(){
